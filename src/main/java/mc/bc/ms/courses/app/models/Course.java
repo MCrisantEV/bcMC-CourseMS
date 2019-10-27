@@ -14,7 +14,7 @@ public class Course {
 	private String id;
 
 	@NotBlank
-	private String intitute;
+	private String institute;
 	@NotBlank
 	private String name;
 	@NotBlank
