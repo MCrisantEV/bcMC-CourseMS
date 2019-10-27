@@ -3,6 +3,8 @@ package mc.bc.ms.courses.app.controllers;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import mc.bc.ms.courses.app.models.Course;
 import mc.bc.ms.courses.app.services.CourseService;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -20,7 +23,16 @@ public class CourseControllers {
 	
 	@PostMapping
 	public Mono<Map<String, Object>> createInstitute(@RequestBody Course course) {
-
 		return couServ.saveCourse(course);
+	}
+	
+	@GetMapping
+	public Flux<Course> listCourses(){
+		return couServ.findAll();
+	}
+	
+	@GetMapping("/{id}")
+	public Mono<Course> findIdCourse(@PathVariable String id){
+		return couServ.findById(id);
 	}
 }

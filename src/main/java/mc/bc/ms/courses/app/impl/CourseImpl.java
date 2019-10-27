@@ -20,7 +20,7 @@ import reactor.core.publisher.Mono;
 public class CourseImpl implements CourseService {
 
 	@Autowired
-	private CourseRepository intRep;
+	private CourseRepository couRep;
 
 	@Autowired
 	private Validator validator;
@@ -58,12 +58,12 @@ public class CourseImpl implements CourseService {
 				respuesta.put("Error: ", "La cupo máximo no puede ser menor que cupo mínimo");
 				return Mono.just(respuesta);
 			} else {
-				return intRep.findByTeacherAndState(c.getTeacher(), "Active").collectList().map(listCour -> {
+				return couRep.findByTeacherAndState(c.getTeacher(), "Active").collectList().map(listCour -> {
 //					if(listCour.size() >= 2 && c.getState().equals("Active")) {
 					if(listCour.size() >= 2) {
 						respuesta.put("Error: ", c.getTeacher() + " tiene mas de 2 cursos activos");
 					}else {
-						intRep.save(course).subscribe();
+						couRep.save(course).subscribe();
 						respuesta.put("Curso", c.getName());
 						respuesta.put("Mensaje", "Curso creado con éxito");
 					}
@@ -71,6 +71,16 @@ public class CourseImpl implements CourseService {
 				});
 			}
 		});
+	}
+
+	@Override
+	public Flux<Course> findAll() {
+		return couRep.findAll();
+	}
+
+	@Override
+	public Mono<Course> findById(String id) {
+		return couRep.findById(id);
 	}
 
 }
