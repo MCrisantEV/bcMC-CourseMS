@@ -13,5 +13,7 @@ public interface CourseService {
 	public Flux<Course> findAll();
 	
 	public Mono<Course> findById(String id);
+	
+	public Mono<Map<String, Object>> updateCourse(String id, Course course);
 
 }
