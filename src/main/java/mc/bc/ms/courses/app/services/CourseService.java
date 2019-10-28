@@ -15,5 +15,7 @@ public interface CourseService {
 	public Mono<Course> findById(String id);
 	
 	public Mono<Map<String, Object>> updateCourse(String id, Course course);
+	
+	public Mono<Map<String, Object>> deleteCourses(String id);
 
 }

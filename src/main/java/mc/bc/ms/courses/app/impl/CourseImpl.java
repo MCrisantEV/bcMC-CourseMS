@@ -137,5 +137,22 @@ public class CourseImpl implements CourseService {
 			}
 		});
 	}
+	
+	@Override
+	public Mono<Map<String, Object>> deleteCourses(String id) {
+		Map<String, Object> respuesta = new HashMap<String, Object>();
+
+		return couRep.findById(id).map(courDb -> {
+			couRep.delete(courDb).subscribe();
+			respuesta.put("Mensaje: ", courDb.getName() + " se eliminó con éxito");
+			return respuesta;
+		}).switchIfEmpty(Mono.just("").map(er -> {
+			respuesta.put("Mensaje: ", "El Curso no se pudo elimininar");
+			respuesta.put("Status", HttpStatus.BAD_REQUEST.value());
+			respuesta.put("Error", "Problemas con ID");
+			return respuesta;
+		}));
+
+	}
 
 }
