@@ -24,18 +24,18 @@ public class CourseControllers {
 	private CourseService couServ;
 	
 	@PostMapping
-	public Mono<Map<String, Object>> createInstitute(@RequestBody Course course) {
+	public Mono<Map<String, Object>> createCourse(@RequestBody Course course) {
 		return couServ.saveCourse(course);
 	}
 	
 	@GetMapping
 	public Flux<Course> listCourses(){
-		return couServ.findAll();
+		return couServ.findAllCourse();
 	}
 	
 	@GetMapping("/{id}")
 	public Mono<Course> findIdCourse(@PathVariable String id){
-		return couServ.findById(id);
+		return couServ.findIdCourse(id);
 	}
 	
 	@PutMapping("/{id}")
@@ -44,7 +44,12 @@ public class CourseControllers {
 	}
 	
 	@DeleteMapping("/{id}")
-	public Mono<Map<String, Object>> removeInstitute(@PathVariable String id) {
+	public Mono<Map<String, Object>> removeCourse(@PathVariable String id) {
 		return couServ.deleteCourses(id);
+	}
+	
+	@GetMapping("/institute/{id}")
+	public Flux<Course> listInstituteCourse(@PathVariable String id){
+		return couServ.findAllInstituteCourse(id);
 	}
 }

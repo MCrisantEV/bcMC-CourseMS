@@ -74,12 +74,12 @@ public class CourseImpl implements CourseService {
 	}
 
 	@Override
-	public Flux<Course> findAll() {
+	public Flux<Course> findAllCourse() {
 		return couRep.findAll();
 	}
 
 	@Override
-	public Mono<Course> findById(String id) {
+	public Mono<Course> findIdCourse(String id) {
 		return couRep.findById(id);
 	}
 
@@ -153,6 +153,11 @@ public class CourseImpl implements CourseService {
 			return respuesta;
 		}));
 
+	}
+
+	@Override
+	public Flux<Course> findAllInstituteCourse(String institute) {
+		return couRep.findByInstitute(institute);
 	}
 
 }
