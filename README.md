@@ -7,3 +7,6 @@ El Microservicio Courses, contiene varias APIs las cuales devuelven un archivo j
 - APi findIdCourses
 - API updateCourses
 - API deleteCourses
+
+Configuraciones
+- Config Server
