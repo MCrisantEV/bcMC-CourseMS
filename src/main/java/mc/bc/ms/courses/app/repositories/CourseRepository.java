@@ -8,8 +8,12 @@ import reactor.core.publisher.Mono;
 
 public interface CourseRepository extends ReactiveMongoRepository<Course, String> {
 
-	public Flux<Course> findByTeacherAndState(String teacher, String state);
+	public Flux<Course> findByTeacherAndInstituteAndState(String teacher, String intitute, String state);
 	
 	public Flux<Course> findByInstitute(String institute);
+	
+	public Flux<Course> findByTeacherAndInstitute(String teacher, String institute);
+	
+	public Mono<Course> findByNameAndInstitute(String name, String institute);
 	
 }

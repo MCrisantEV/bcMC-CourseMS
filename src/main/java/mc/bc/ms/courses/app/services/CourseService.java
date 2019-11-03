@@ -19,5 +19,7 @@ public interface CourseService {
 	public Mono<Map<String, Object>> deleteCourses(String id);
 	
 	public Flux<Course> findAllInstituteCourse(String institute);
+	
+	public Flux<Course> findTeacher(String teacher, String institute);
 
 }

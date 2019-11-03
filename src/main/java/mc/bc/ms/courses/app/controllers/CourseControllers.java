@@ -52,4 +52,9 @@ public class CourseControllers {
 	public Flux<Course> listInstituteCourse(@PathVariable String id){
 		return couServ.findAllInstituteCourse(id);
 	}
+	
+	@GetMapping("/teachers/{id}/{institute}")
+	public Flux<Course> listInstituteCourse(@PathVariable String id, @PathVariable String institute){
+		return couServ.findTeacher(id, institute);
+	}
 }

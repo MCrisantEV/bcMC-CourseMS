@@ -28,49 +28,26 @@ public class CourseImpl implements CourseService {
 	@Override
 	public Mono<Map<String, Object>> saveCourse(Course course) {
 		Map<String, Object> respuesta = new HashMap<String, Object>();
-
-		return Mono.just(course).flatMap(c -> {
-
-			Errors errors = new BeanPropertyBindingResult(c, Course.class.getName());
-			validator.validate(c, errors);
-
-			if (errors.hasErrors()) {
-				return Flux.fromIterable(errors.getFieldErrors()).map(err -> {
-					String[] matriz = { err.getField(), err.getDefaultMessage() };
-					return matriz;
-				}).collectList().flatMap(l -> {
-					respuesta.put("status", HttpStatus.BAD_REQUEST.value());
-					respuesta.put("Mensaje", "Error, revise los datos");
-					l.forEach(m -> {
-						for (int i = 0; i < m.length; i++) {respuesta.put(m[0], m[i]);}
+		if (errors(course) == null) {
+			return couRep.findByTeacherAndInstituteAndState(course.getTeacher(), course.getInstitute(), "Active")
+					.collectList().flatMap(listCour -> {
+						if (listCour.size() >= 2) {
+							respuesta.put("Error: ", "El profesor, tiene 2 o más cursos activos");
+							return Mono.just(respuesta);
+						} else {
+							return couRep.findByNameAndInstitute(course.getName(), course.getInstitute()).map(c -> {
+								respuesta.put("Error", "El Curso " + c.getName() + ", ya existe");
+								return respuesta;
+							}).switchIfEmpty(Mono.just(course).map(m -> {
+								couRep.save(course).subscribe();
+								respuesta.put("Mensaje", "Curso " + course.getName() + ", creado con éxito");
+								return respuesta;
+							}));
+						}
 					});
-					return Mono.just(respuesta);
-				});
-			} else if (c.getMin() == 0 || c.getMin() == 0) {
-				respuesta.put("status", HttpStatus.BAD_REQUEST.value());
-				respuesta.put("Mensaje", "Error, revise los datos");
-				if (c.getMin() == 0) { respuesta.put("min: ", "no puede estar vacío"); }
-				if (c.getMax() == 0) { respuesta.put("max: ", "no puede estar vacío"); }
-				return Mono.just(respuesta);
-			} else if (c.getMax() < c.getMin()) {
-				respuesta.put("status", HttpStatus.BAD_REQUEST.value());
-				respuesta.put("Mensaje", "Error, revise los datos");
-				respuesta.put("Error: ", "La cupo máximo no puede ser menor que cupo mínimo");
-				return Mono.just(respuesta);
-			} else {
-				return couRep.findByTeacherAndState(c.getTeacher(), "Active").collectList().map(listCour -> {
-//					if(listCour.size() >= 2 && c.getState().equals("Active")) {
-					if(listCour.size() >= 2) {
-						respuesta.put("Error: ", c.getTeacher() + " tiene mas de 2 cursos activos");
-					}else {
-						couRep.save(course).subscribe();
-						respuesta.put("Curso", c.getName());
-						respuesta.put("Mensaje", "Curso creado con éxito");
-					}
-					return respuesta;
-				});
-			}
-		});
+		} else {
+			return errors(course);
+		}
 	}
 
 	@Override
@@ -86,58 +63,41 @@ public class CourseImpl implements CourseService {
 	@Override
 	public Mono<Map<String, Object>> updateCourse(String id, Course course) {
 		Map<String, Object> respuesta = new HashMap<String, Object>();
-
-		return Mono.just(course).flatMap(c -> {
-
-			Errors errors = new BeanPropertyBindingResult(c, Course.class.getName());
-			validator.validate(c, errors);
-
-			if (errors.hasErrors()) {
-				return Flux.fromIterable(errors.getFieldErrors()).map(err -> {
-					String[] matriz = { err.getField(), err.getDefaultMessage() };
-					return matriz;
-				}).collectList().flatMap(l -> {
-					respuesta.put("status", HttpStatus.BAD_REQUEST.value());
-					respuesta.put("Mensaje", "Error, revise los datos");
-					l.forEach(m -> {
-						for (int i = 0; i < m.length; i++) {respuesta.put(m[0], m[i]);}
-					});
+		course.setName(id);
+		course.setInstitute(id);
+		if (errors(course) == null) {
+			return couRep.findById(id).flatMap(dbc -> {
+				course.setInstitute(dbc.getInstitute());
+				course.setName(dbc.getName());
+				course.setId(id);
+				if (dbc.getTeacher().equals(course.getTeacher())) {
+					couRep.save(course).subscribe();
+					respuesta.put("Mensaje", "El curso se actualizo con éxito");
 					return Mono.just(respuesta);
-				});
-			} else if (c.getMin() == 0 || c.getMin() == 0) {
-				respuesta.put("status", HttpStatus.BAD_REQUEST.value());
-				respuesta.put("Mensaje", "Error, revise los datos");
-				if (c.getMin() == 0) { respuesta.put("min: ", "no puede estar vacío"); }
-				if (c.getMax() == 0) { respuesta.put("max: ", "no puede estar vacío"); }
-				return Mono.just(respuesta);
-			} else if (c.getMax() < c.getMin()) {
-				respuesta.put("status", HttpStatus.BAD_REQUEST.value());
-				respuesta.put("Mensaje", "Error, revise los datos");
-				respuesta.put("Error: ", "La cupo máximo no puede ser menor que cupo mínimo");
-				return Mono.just(respuesta);
-			} else {
-				return couRep.findByTeacherAndState(c.getTeacher(), "Active").collectList().flatMap(listCour -> {
-//					if(listCour.size() >= 2 && c.getState().equals("Active")) {
-					if(listCour.size() >= 2) {
-						respuesta.put("Error: ", c.getTeacher() + " tiene mas de 2 cursos activos");
-						return Mono.just(respuesta);
-					}else {
-						return couRep.findById(id).map(coutDb -> {
-							c.setId(id);
-							respuesta.put("Curso", c.getName());
-							respuesta.put("Mensaje", "Curso se actualizo con éxito");
-							couRep.save(c).subscribe();
-							return respuesta; 
-						}).switchIfEmpty(Mono.just(course).map(er -> {
-							respuesta.put("Error: ", er.getName() + " No se puede actualizar");
-							return respuesta;
-						}));
-					}
-				});
-			}
-		});
+				} else {
+					return couRep
+							.findByTeacherAndInstituteAndState(course.getTeacher(), course.getInstitute(), "Active")
+							.collectList().map(listCour -> {
+								if (listCour.size() >= 2) {
+									respuesta.put("Error: ", "El profesor, tiene 2 o más cursos activos");
+									return respuesta;
+								} else {
+									couRep.save(course).subscribe();
+									respuesta.put("Mensaje", "Curso " + course.getName() + ", se actualizo con éxito");
+									return respuesta;
+								}
+							});
+				}
+
+			}).switchIfEmpty(Mono.just("").map(er -> {
+				respuesta.put("Error", "El curso no esta registrado");
+				return respuesta;
+			}));
+		} else {
+			return errors(course);
+		}
 	}
-	
+
 	@Override
 	public Mono<Map<String, Object>> deleteCourses(String id) {
 		Map<String, Object> respuesta = new HashMap<String, Object>();
@@ -160,4 +120,44 @@ public class CourseImpl implements CourseService {
 		return couRep.findByInstitute(institute);
 	}
 
+	@Override
+	public Flux<Course> findTeacher(String teacher, String institute) {
+		return couRep.findByTeacherAndInstitute(teacher, institute);
+	}
+
+	private Mono<Map<String, Object>> errors(Course course) {
+		Map<String, Object> respuesta = new HashMap<String, Object>();
+		Errors errors = new BeanPropertyBindingResult(course, Course.class.getName());
+		validator.validate(course, errors);
+
+		respuesta.put("status", HttpStatus.BAD_REQUEST.value());
+		respuesta.put("Mensaje", "Error, revise los datos");
+
+		if (errors.hasErrors()) {
+			return Flux.fromIterable(errors.getFieldErrors()).map(err -> {
+				String[] matriz = { err.getField(), err.getDefaultMessage() };
+				return matriz;
+			}).collectList().flatMap(l -> {
+				l.forEach(m -> {
+					for (int i = 0; i < m.length; i++) {
+						respuesta.put(m[0], m[i]);
+					}
+				});
+				return Mono.just(respuesta);
+			});
+		} else if (course.getMin() == 0 || course.getMin() == 0) {
+			if (course.getMin() == 0) {
+				respuesta.put("min: ", "no puede estar vacío");
+			}
+			if (course.getMax() == 0) {
+				respuesta.put("max: ", "no puede estar vacío");
+			}
+			return Mono.just(respuesta);
+		} else if (course.getMax() < course.getMin()) {
+			respuesta.put("Error: ", "La cupo máximo no puede ser menor que cupo mínimo");
+			return Mono.just(respuesta);
+		}
+
+		return null;
+	}
 }
